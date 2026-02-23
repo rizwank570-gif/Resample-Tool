@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blood Resampling Management Tool</title>
+    <title>Bulk Whatsapp Sender</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .custom-scrollbar::-webkit-scrollbar {
@@ -19,6 +19,16 @@
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: #555;
         }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .animate-fadeIn {
+            animation: fadeIn 0.2s ease-out forwards;
+        }
+        .progress-bar {
+            transition: width 0.3s ease-in-out;
+        }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen font-sans text-slate-900">
@@ -31,7 +41,7 @@
                 <p class="text-slate-600 mt-1">Developed by Rizwan Ahmad</p>
             </div>
             <div class="flex items-center gap-3">
-                <button id="bulkSendBtn" onclick="sendSelected()" class="hidden text-xs font-bold bg-green-600 text-white hover:bg-green-700 transition-colors uppercase tracking-wider px-4 py-2 rounded-lg shadow-sm">
+                <button id="bulkSendBtn" onclick="startBulkSend()" class="hidden text-xs font-bold bg-green-600 text-white hover:bg-green-700 transition-colors uppercase tracking-wider px-4 py-2 rounded-lg shadow-sm">
                     Send Selected (0)
                 </button>
                 <button onclick="clearAllData()" class="text-xs font-bold text-red-500 hover:text-red-700 transition-colors uppercase tracking-wider px-3 py-2">
@@ -49,62 +59,42 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            <!-- Left Panel: Message Configuration -->
+            <!-- Left Panel -->
             <div class="lg:col-span-1 space-y-6">
-                <!-- CSV Upload Box -->
+                <!-- CSV Upload -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                     <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
                         Upload Contacts
                     </h2>
-                    <p class="text-xs text-slate-500 mb-4">Upload a CSV file with columns: <br><strong>Name, Contact Number</strong></p>
-                    
-                    <label class="block">
-                        <span class="sr-only">Choose CSV File</span>
-                        <input type="file" id="csvInput" accept=".csv" onchange="handleFileUpload(event)"
-                            class="block w-full text-sm text-slate-500
-                            file:mr-4 file:py-2 file:px-4
-                            file:rounded-full file:border-0
-                            file:text-sm file:font-semibold
-                            file:bg-blue-50 file:text-blue-700
-                            hover:file:bg-blue-100 cursor-pointer"/>
-                    </label>
+                    <p class="text-xs text-slate-500 mb-4">CSV Columns: <strong>Name, Contact Number</strong></p>
+                    <input type="file" id="csvInput" accept=".csv" onchange="handleFileUpload(event)" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"/>
                 </div>
 
+                <!-- Template -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    <h2 class="text-lg font-semibold mb-2 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                         Message Template
                     </h2>
-                    <p class="text-xs text-slate-500 mb-3 italic">The tag <span class="text-blue-600 font-bold font-mono">{Name}</span> will automatically be replaced with the person's actual name.</p>
-                    
-                    <textarea id="messageTemplate" class="w-full h-72 p-4 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all bg-slate-50 leading-relaxed">Hi {Name}, 
-
-We sincerely apologize for the inconvenience. 
-
-Regarding your health checkup held on 17th Feb at the office location, some parameters could not be processed from the previous sample. We need to perform a resampling to ensure accurate results.
+                    <textarea id="messageTemplate" class="w-full h-72 p-4 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-slate-50 leading-relaxed custom-scrollbar">Hi {Name}, 
 
 Please confirm a convenient date and time for the resampling. 
 
-Options:
-1. Office Location (Please share date and time slot)
-2. Home Collection (Please share your complete address, pincode, and preferred date and time slot)
-
 Thank you for your cooperation.</textarea>
-                    
                     <button onclick="saveTemplate()" class="mt-4 w-full bg-slate-800 text-white py-2.5 rounded-lg hover:bg-slate-700 transition-colors text-sm font-medium shadow-sm">
-                        Save Changes to Template
+                        Save Changes
                     </button>
                 </div>
             </div>
 
-            <!-- Right Panel: Employee List -->
+            <!-- Right Panel -->
             <div class="lg:col-span-2 space-y-4">
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div class="p-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/50 backdrop-blur-sm">
+                    <div class="p-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/50">
                         <div class="relative w-full">
-                            <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search employee name or mobile..." class="pl-10 pr-4 py-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none w-full bg-slate-50">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 absolute left-3 top-3 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search..." class="pl-10 pr-4 py-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none w-full bg-slate-50">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 absolute left-3 top-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                         </div>
                     </div>
                     
@@ -113,16 +103,14 @@ Thank you for your cooperation.</textarea>
                             <thead class="bg-slate-50 sticky top-0 z-10">
                                 <tr>
                                     <th class="px-6 py-4 w-12 border-b border-slate-200">
-                                        <input type="checkbox" id="selectAll" onclick="toggleSelectAll(this)" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                                        <input type="checkbox" id="selectAll" onclick="toggleSelectAll(this)" class="w-4 h-4 rounded border-slate-300 text-blue-600">
                                     </th>
-                                    <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200">Employee Details</th>
-                                    <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200">Mobile</th>
-                                    <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right border-b border-slate-200">Actions</th>
+                                    <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest border-b">Employee</th>
+                                    <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest border-b">Mobile</th>
+                                    <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right border-b">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="tableBody" class="divide-y divide-slate-100">
-                                <!-- Data will be loaded via JavaScript -->
-                            </tbody>
+                            <tbody id="tableBody" class="divide-y divide-slate-100"></tbody>
                         </table>
                     </div>
                 </div>
@@ -130,234 +118,250 @@ Thank you for your cooperation.</textarea>
         </div>
     </div>
 
-    <!-- Notification Toast -->
+    <!-- Automated Bulk Sender Modal -->
+    <div id="bulkModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-fadeIn">
+            <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                <h3 class="font-bold text-slate-800">Automated Sending</h3>
+                <button onclick="closeBulkModal()" class="text-slate-400 hover:text-slate-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            
+            <div class="p-8 text-center">
+                <div class="mb-6">
+                    <div class="text-4xl font-black text-blue-600 mb-1" id="bulkProgress">0 / 0</div>
+                    <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden mt-4">
+                        <div id="bulkProgressBar" class="bg-blue-500 h-full progress-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <div class="bg-slate-50 rounded-2xl p-6 border border-slate-100 mb-6">
+                    <div id="statusLabel" class="text-xs text-slate-400 uppercase tracking-widest font-bold mb-1">Next Contact</div>
+                    <div class="text-xl font-bold text-slate-800" id="currentContactName">Ready</div>
+                    <div class="text-slate-500 font-mono text-sm" id="currentContactMobile">-</div>
+                </div>
+
+                <!-- Automation Controls -->
+                <div class="flex flex-col gap-3">
+                    <div class="flex items-center justify-between bg-blue-50 p-3 rounded-xl mb-2">
+                        <label class="text-xs font-bold text-blue-700">Interval (Seconds)</label>
+                        <input type="number" id="autoDelay" value="3" min="1" max="10" class="w-16 bg-white border border-blue-200 rounded px-2 py-1 text-sm font-bold text-center">
+                    </div>
+
+                    <button id="autoStartBtn" onclick="toggleAutoSend()" class="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-green-700 shadow-lg shadow-green-200 active:scale-[0.98] flex items-center justify-center gap-2">
+                        <span id="autoStartBtnText">Start Auto Send</span>
+                    </button>
+                    
+                    <button id="manualStepBtn" onclick="sendNextInBulk()" class="w-full bg-slate-100 text-slate-600 py-3 rounded-xl font-bold text-sm hover:bg-slate-200">
+                        Send Manually (Next)
+                    </button>
+                </div>
+                
+                <p class="mt-6 text-[11px] text-slate-400 leading-relaxed">
+                    <strong>Important:</strong> Allow popups in your browser settings.<br>
+                    Auto sending opens a tab for each contact every few seconds.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
     <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full text-sm shadow-2xl opacity-0 transition-all duration-300 pointer-events-none z-50 transform translate-y-4">
-        Message copied to clipboard!
+        Message copied!
     </div>
 
     <script>
-        // Start with empty list
         let contacts = [];
         let selectedIds = new Set();
+        let bulkQueue = [];
+        let currentBulkIndex = 0;
+        let isAutoSending = false;
+        let autoSendTimer = null;
 
         const tableBody = document.getElementById('tableBody');
         const countEl = document.getElementById('count');
         const templateEl = document.getElementById('messageTemplate');
         const searchInput = document.getElementById('searchInput');
         const bulkSendBtn = document.getElementById('bulkSendBtn');
+        const bulkModal = document.getElementById('bulkModal');
 
-        // Handles CSV Upload and Parsing
         function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
-            reader.onload = function(e) {
-                const text = e.target.result;
-                processCSV(text);
-            };
+            reader.onload = (e) => processCSV(e.target.result);
             reader.readAsText(file);
         }
 
         function processCSV(text) {
             const lines = text.split(/\r?\n/);
             const newContacts = [];
-            
             for (let i = 1; i < lines.length; i++) {
                 const line = lines[i].trim();
                 if (!line) continue;
-                
                 const parts = line.split(',');
                 if (parts.length >= 2) {
                     newContacts.push({
                         id: Date.now() + i,
                         name: parts[0].trim().replace(/^"|"$/g, ''),
-                        mobile: parts[1].trim().replace(/^"|"$/g, '').replace(/\D/g, ''),
-                        age: "--", 
-                        gen: "--"
+                        mobile: parts[1].trim().replace(/^"|"$/g, '').replace(/\D/g, '')
                     });
                 }
             }
-
             if (newContacts.length > 0) {
                 contacts = newContacts;
                 selectedIds.clear();
                 updateBulkButton();
                 saveContacts();
                 renderTable(contacts);
-                showToast(`${newContacts.length} contacts imported!`);
-            } else {
-                showToast("No valid contacts found in CSV.");
             }
-            
             document.getElementById('csvInput').value = '';
         }
 
         function toggleSelectAll(checkbox) {
-            if (checkbox.checked) {
-                contacts.forEach(c => selectedIds.add(c.id));
-            } else {
-                selectedIds.clear();
-            }
+            contacts.forEach(c => checkbox.checked ? selectedIds.add(c.id) : selectedIds.delete(c.id));
             renderTable(contacts);
             updateBulkButton();
         }
 
         function toggleContactSelection(id) {
-            if (selectedIds.has(id)) {
-                selectedIds.delete(id);
-            } else {
-                selectedIds.add(id);
-            }
-            
-            const selectAllCheckbox = document.getElementById('selectAll');
-            if (selectedIds.size === contacts.length && contacts.length > 0) {
-                selectAllCheckbox.checked = true;
-            } else {
-                selectAllCheckbox.checked = false;
-            }
+            selectedIds.has(id) ? selectedIds.delete(id) : selectedIds.add(id);
+            document.getElementById('selectAll').checked = selectedIds.size === contacts.length;
             updateBulkButton();
+            renderTable(contacts);
         }
 
         function updateBulkButton() {
-            if (selectedIds.size > 0) {
-                bulkSendBtn.classList.remove('hidden');
-                bulkSendBtn.innerText = `Send Selected (${selectedIds.size})`;
-            } else {
-                bulkSendBtn.classList.add('hidden');
-            }
+            bulkSendBtn.classList.toggle('hidden', selectedIds.size === 0);
+            bulkSendBtn.innerText = `Send Selected (${selectedIds.size})`;
         }
 
         function renderTable(dataToDisplay) {
-            tableBody.innerHTML = '';
+            tableBody.innerHTML = dataToDisplay.length ? '' : '<tr><td colspan="4" class="px-6 py-12 text-center text-slate-400 italic text-sm">Upload a CSV to start.</td></tr>';
             countEl.innerText = dataToDisplay.length;
-
-            if (dataToDisplay.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="4" class="px-6 py-12 text-center text-slate-400 italic text-sm">No contacts loaded. Upload a CSV to start.</td></tr>`;
-                return;
-            }
-
             dataToDisplay.forEach((person) => {
                 const isSelected = selectedIds.has(person.id);
                 const row = document.createElement('tr');
-                row.className = `hover:bg-blue-50/50 transition-colors group ${isSelected ? 'bg-blue-50/30' : ''}`;
+                row.className = `hover:bg-blue-50/50 transition-colors ${isSelected ? 'bg-blue-50/30' : ''}`;
                 row.innerHTML = `
-                    <td class="px-6 py-4">
-                        <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleContactSelection(${person.id})" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
-                    </td>
-                    <td class="px-6 py-4">
-                        <div class="text-sm font-semibold text-slate-900">${person.name}</div>
-                        <div class="text-xs text-slate-500 font-medium">Contact</div>
-                    </td>
-                    <td class="px-6 py-4 text-sm text-slate-600 font-mono tracking-tight">
-                        +91 ${person.mobile}
-                    </td>
-                    <td class="px-6 py-4 text-right space-x-2 whitespace-nowrap">
-                        <button onclick='handleAction("copy", ${JSON.stringify(person).replace(/'/g, "&apos;")})' 
-                                class="inline-flex items-center gap-1.5 text-xs bg-slate-100 text-slate-700 px-3.5 py-2 rounded-lg hover:bg-slate-200 font-bold transition-all border border-slate-200">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                            Copy
-                        </button>
-                        <button onclick='handleAction("whatsapp", ${JSON.stringify(person).replace(/'/g, "&apos;")})' 
-                                class="inline-flex items-center gap-1.5 text-xs bg-green-500 text-white px-3.5 py-2 rounded-lg hover:bg-green-600 font-bold transition-all shadow-md shadow-green-200/50">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-14 8.38 8.38 0 0 1 3.8.9L21 3z"></path></svg>
-                            WhatsApp
-                        </button>
+                    <td class="px-6 py-4"><input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleContactSelection(${person.id})" class="w-4 h-4 rounded border-slate-300 text-blue-600"></td>
+                    <td class="px-6 py-4"><div class="text-sm font-semibold text-slate-900">${person.name}</div></td>
+                    <td class="px-6 py-4 text-sm text-slate-600 font-mono">+91 ${person.mobile}</td>
+                    <td class="px-6 py-4 text-right">
+                        <button onclick='handleAction("copy", ${person.id})' class="text-xs bg-slate-100 px-3 py-1.5 rounded hover:bg-slate-200 font-bold">Copy</button>
+                        <button onclick='handleAction("whatsapp", ${person.id})' class="text-xs bg-green-500 text-white px-3 py-1.5 rounded hover:bg-green-600 font-bold">WhatsApp</button>
                     </td>
                 `;
                 tableBody.appendChild(row);
             });
         }
 
-        function filterTable() {
-            const query = searchInput.value.toLowerCase();
-            const filtered = contacts.filter(p => 
-                p.name.toLowerCase().includes(query) || 
-                p.mobile.includes(query)
-            );
-            renderTable(filtered);
-        }
-
-        function handleAction(action, person) {
-            const template = templateEl.value;
-            const personalizedMsg = template.replace(/{Name}/g, person.name);
-
+        function handleAction(action, id) {
+            const person = contacts.find(c => c.id === id);
+            const msg = templateEl.value.replace(/{Name}/g, person.name);
             if (action === "copy") {
                 const el = document.createElement('textarea');
-                el.value = personalizedMsg;
-                document.body.appendChild(el);
-                el.select();
-                document.execCommand('copy');
-                document.body.removeChild(el);
-                showToast(`Message for ${person.name} copied!`);
-            } else if (action === "whatsapp") {
-                const encodedMsg = encodeURIComponent(personalizedMsg);
-                const url = `https://wa.me/91${person.mobile}?text=${encodedMsg}`;
-                window.open(url, '_blank');
+                el.value = msg; document.body.appendChild(el); el.select();
+                document.execCommand('copy'); document.body.removeChild(el);
+                showToast("Copied!");
+            } else {
+                window.open(`https://wa.me/91${person.mobile}?text=${encodeURIComponent(msg)}`, '_blank');
             }
         }
 
-        function sendSelected() {
-            const selectedContacts = contacts.filter(c => selectedIds.has(c.id));
-            if (selectedContacts.length === 0) return;
+        // --- Automation Logic ---
+        function startBulkSend() {
+            bulkQueue = contacts.filter(c => selectedIds.has(c.id));
+            currentBulkIndex = 0;
+            isAutoSending = false;
+            updateBulkModalUI();
+            bulkModal.classList.remove('hidden');
+        }
 
-            if (confirm(`This will open ${selectedContacts.length} WhatsApp tabs. Your browser might block these popups initially. Do you want to continue?`)) {
-                selectedContacts.forEach((person, index) => {
-                    // Slight timeout to prevent some browser blocks
-                    setTimeout(() => {
-                        const template = templateEl.value;
-                        const personalizedMsg = template.replace(/{Name}/g, person.name);
-                        const encodedMsg = encodeURIComponent(personalizedMsg);
-                        const url = `https://wa.me/91${person.mobile}?text=${encodedMsg}`;
-                        window.open(url, '_blank');
-                    }, index * 500); // 500ms interval between tabs
-                });
+        function toggleAutoSend() {
+            if (isAutoSending) {
+                stopAutoSend();
+            } else {
+                isAutoSending = true;
+                document.getElementById('autoStartBtnText').innerText = "Stop Automation";
+                document.getElementById('autoStartBtn').classList.replace('bg-green-600', 'bg-red-600');
+                document.getElementById('statusLabel').innerText = "Sending Automatically...";
+                autoStep();
             }
         }
 
-        function showToast(text) {
-            const toast = document.getElementById('toast');
-            toast.innerText = text;
-            toast.style.opacity = '1';
-            toast.style.transform = 'translate(-50%, -20px)';
+        function stopAutoSend() {
+            isAutoSending = false;
+            clearTimeout(autoSendTimer);
+            document.getElementById('autoStartBtnText').innerText = "Start Auto Send";
+            document.getElementById('autoStartBtn').classList.replace('bg-red-600', 'bg-green-600');
+            document.getElementById('statusLabel').innerText = "Paused / Ready";
+        }
+
+        function autoStep() {
+            if (!isAutoSending || currentBulkIndex >= bulkQueue.length) {
+                if (currentBulkIndex >= bulkQueue.length) stopAutoSend();
+                return;
+            }
+            sendNextInBulk();
+            const delay = (parseInt(document.getElementById('autoDelay').value) || 3) * 1000;
+            autoSendTimer = setTimeout(autoStep, delay);
+        }
+
+        function sendNextInBulk() {
+            if (currentBulkIndex >= bulkQueue.length) return;
+            const person = bulkQueue[currentBulkIndex];
+            const msg = templateEl.value.replace(/{Name}/g, person.name);
+            window.open(`https://wa.me/91${person.mobile}?text=${encodeURIComponent(msg)}`, '_blank');
+            currentBulkIndex++;
+            updateBulkModalUI();
+        }
+
+        function updateBulkModalUI() {
+            const progress = document.getElementById('bulkProgress');
+            const bar = document.getElementById('bulkProgressBar');
+            const nameEl = document.getElementById('currentContactName');
+            const mobEl = document.getElementById('currentContactMobile');
             
-            setTimeout(() => { 
-                toast.style.opacity = '0'; 
-                toast.style.transform = 'translate(-50%, 0)';
-            }, 2500);
-        }
-
-        function saveTemplate() {
-            localStorage.setItem('resampling_template_v2', templateEl.value);
-            showToast("Message template saved!");
-        }
-
-        function saveContacts() {
-            localStorage.setItem('resampling_contacts_v2', JSON.stringify(contacts));
-        }
-
-        function clearAllData() {
-            if (confirm("This will remove all uploaded contacts and reset the template. Are you sure?")) {
-                contacts = [];
-                selectedIds.clear();
-                localStorage.removeItem('resampling_contacts_v2');
-                updateBulkButton();
-                renderTable(contacts);
-                showToast("All data cleared.");
+            if (currentBulkIndex >= bulkQueue.length) {
+                progress.innerText = "Finished!";
+                bar.style.width = "100%";
+                nameEl.innerText = "Done!";
+                mobEl.innerText = "-";
+                document.getElementById('autoStartBtn').classList.add('hidden');
+                document.getElementById('manualStepBtn').classList.add('hidden');
+                return;
             }
+
+            const current = bulkQueue[currentBulkIndex];
+            progress.innerText = `${currentBulkIndex + 1} / ${bulkQueue.length}`;
+            bar.style.width = `${((currentBulkIndex) / bulkQueue.length) * 100}%`;
+            nameEl.innerText = current.name;
+            mobEl.innerText = `+91 ${current.mobile}`;
+            document.getElementById('autoStartBtn').classList.remove('hidden');
+            document.getElementById('manualStepBtn').classList.remove('hidden');
         }
+
+        function closeBulkModal() {
+            stopAutoSend();
+            bulkModal.classList.add('hidden');
+        }
+
+        function filterTable() {
+            const q = searchInput.value.toLowerCase();
+            renderTable(contacts.filter(p => p.name.toLowerCase().includes(q) || p.mobile.includes(q)));
+        }
+
+        function saveTemplate() { localStorage.setItem('rbm_template_v2', templateEl.value); showToast("Template Saved"); }
+        function saveContacts() { localStorage.setItem('rbm_contacts_v2', JSON.stringify(contacts)); }
+        function clearAllData() { if (confirm("Clear all?")) { contacts = []; selectedIds.clear(); localStorage.removeItem('rbm_contacts_v2'); updateBulkButton(); renderTable(contacts); } }
+        function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.style.opacity = '1'; t.style.transform = 'translate(-50%, -20px)'; setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, 0)'; }, 2000); }
 
         window.onload = () => {
-            const savedTemplate = localStorage.getItem('resampling_template_v2');
-            if (savedTemplate) templateEl.value = savedTemplate;
-            
-            const savedContacts = localStorage.getItem('resampling_contacts_v2');
-            if (savedContacts) {
-                contacts = JSON.parse(savedContacts);
-            }
-            
+            templateEl.value = localStorage.getItem('rbm_template_v2') || templateEl.value;
+            contacts = JSON.parse(localStorage.getItem('rbm_contacts_v2') || '[]');
             renderTable(contacts);
-            updateBulkButton();
         };
     </script>
 </body>
