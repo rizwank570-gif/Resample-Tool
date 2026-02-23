@@ -27,15 +27,23 @@
         <!-- Header -->
         <header class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-slate-800 tracking-tight">Blood Resampling Manager</h1>
-                <p class="text-slate-600 mt-1">Automated messaging for the Feb 17th Health Checkup follow-ups</p>
+                <h1 class="text-3xl font-bold text-slate-800 tracking-tight">Bulk Whatsapp Sender</h1>
+                <p class="text-slate-600 mt-1">Developed by Rizwan Ahmad</p>
             </div>
-            <div class="bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2">
-                <span class="relative flex h-2 w-2">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
-                </span>
-                <span id="count">0</span> Contacts Loaded
+            <div class="flex items-center gap-3">
+                <button id="bulkSendBtn" onclick="sendSelected()" class="hidden text-xs font-bold bg-green-600 text-white hover:bg-green-700 transition-colors uppercase tracking-wider px-4 py-2 rounded-lg shadow-sm">
+                    Send Selected (0)
+                </button>
+                <button onclick="clearAllData()" class="text-xs font-bold text-red-500 hover:text-red-700 transition-colors uppercase tracking-wider px-3 py-2">
+                    Clear All
+                </button>
+                <div class="bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
+                    </span>
+                    <span id="count">0</span> Contacts Loaded
+                </div>
             </div>
         </header>
 
@@ -43,6 +51,26 @@
             
             <!-- Left Panel: Message Configuration -->
             <div class="lg:col-span-1 space-y-6">
+                <!-- CSV Upload Box -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                        Upload Contacts
+                    </h2>
+                    <p class="text-xs text-slate-500 mb-4">Upload a CSV file with columns: <br><strong>Name, Contact Number</strong></p>
+                    
+                    <label class="block">
+                        <span class="sr-only">Choose CSV File</span>
+                        <input type="file" id="csvInput" accept=".csv" onchange="handleFileUpload(event)"
+                            class="block w-full text-sm text-slate-500
+                            file:mr-4 file:py-2 file:px-4
+                            file:rounded-full file:border-0
+                            file:text-sm file:font-semibold
+                            file:bg-blue-50 file:text-blue-700
+                            hover:file:bg-blue-100 cursor-pointer"/>
+                    </label>
+                </div>
+
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                     <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
@@ -68,15 +96,6 @@ Thank you for your cooperation.</textarea>
                         Save Changes to Template
                     </button>
                 </div>
-
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                    <h2 class="text-sm font-semibold text-slate-700 mb-2 uppercase tracking-wider">Helpful Tips</h2>
-                    <ul class="text-xs text-slate-500 space-y-2">
-                        <li class="flex gap-2"><span>•</span> Use the Search bar to find employees instantly by name or phone.</li>
-                        <li class="flex gap-2"><span>•</span> Clicking "WhatsApp" opens a new tab with the pre-filled message.</li>
-                        <li class="flex gap-2"><span>•</span> The "Copy" button lets you paste the personalized message manually into any app.</li>
-                    </ul>
-                </div>
             </div>
 
             <!-- Right Panel: Employee List -->
@@ -93,6 +112,9 @@ Thank you for your cooperation.</textarea>
                         <table class="w-full text-left border-collapse">
                             <thead class="bg-slate-50 sticky top-0 z-10">
                                 <tr>
+                                    <th class="px-6 py-4 w-12 border-b border-slate-200">
+                                        <input type="checkbox" id="selectAll" onclick="toggleSelectAll(this)" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                                    </th>
                                     <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200">Employee Details</th>
                                     <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200">Mobile</th>
                                     <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right border-b border-slate-200">Actions</th>
@@ -114,66 +136,118 @@ Thank you for your cooperation.</textarea>
     </div>
 
     <script>
-        // Full Employee List
-        let contacts = [
-            {id: 1, name: "V. kalyan kumar", age: 32, gen: "M", mobile: "9666611832"},
-            {id: 2, name: "R.D. chakvee", age: 50, gen: "M", mobile: "9652292906"},
-            {id: 3, name: "Sri harsha G.", age: 36, gen: "M", mobile: "9989007229"},
-            {id: 4, name: "Dinesh kumar awari", age: 36, gen: "M", mobile: "8686234471"},
-            {id: 5, name: "Santhosh kumar vangala", age: 37, gen: "M", mobile: "9989030749"},
-            {id: 6, name: "Ajay patel", age: 25, gen: "M", mobile: "7999100783"},
-            {id: 7, name: "V. pradeep Reddy", age: 34, gen: "M", mobile: "9959472364"},
-            {id: 8, name: "Y. Prudhvi", age: 31, gen: "M", mobile: "7993327284"},
-            {id: 9, name: "P. Mallikarjuna", age: 40, gen: "M", mobile: "9030700905"},
-            {id: 10, name: "Sherikas Rohith Rao", age: 30, gen: "M", mobile: "9494542125"},
-            {id: 11, name: "Krishna Kr", age: 25, gen: "M", mobile: "9771732505"},
-            {id: 12, name: "Bhavya Ande", age: 32, gen: "F", mobile: "9000298590"},
-            {id: 13, name: "Y. Rahul", age: 25, gen: "M", mobile: "9849559576"},
-            {id: 14, name: "G. Eshwar", age: 27, gen: "M", mobile: "9666250466"},
-            {id: 15, name: "B. Sriharsha", age: 34, gen: "M", mobile: "9491982851"},
-            {id: 16, name: "Rahul Khandelwal", age: 24, gen: "M", mobile: "8347299320"},
-            {id: 17, name: "Chetan Kushwaha", age: 24, gen: "M", mobile: "9424788675"},
-            {id: 18, name: "Zuhaib wami", age: 30, gen: "M", mobile: "7006581506"},
-            {id: 19, name: "Shafina Shaik G", age: 23, gen: "F", mobile: "7396426254"},
-            {id: 20, name: "Prathyush M", age: 37, gen: "M", mobile: "8978164815"},
-            {id: 21, name: "Goyal Bhalle", age: 39, gen: "M", mobile: "8130705588"},
-            {id: 22, name: "Gorigipati Harshitha", age: 32, gen: "F", mobile: "8008231848"},
-            {id: 23, name: "Jyothi Magi M", age: 29, gen: "F", mobile: "9446121762"},
-            {id: 24, name: "V. Gokul KRISHNAN", age: 25, gen: "M", mobile: "8374145220"},
-            {id: 25, name: "B. Goutham", age: 36, gen: "M", mobile: "9000439840"},
-            {id: 26, name: "K. Praveen", age: 32, gen: "M", mobile: "9032148288"},
-            {id: 27, name: "D. Amar", age: 37, gen: "M", mobile: "8015546787"},
-            {id: 28, name: "M.V Sudarshan Reddy", age: 34, gen: "M", mobile: "9966423432"},
-            {id: 29, name: "Kanika Chaudhari", age: 28, gen: "F", mobile: "7093825512"},
-            {id: 30, name: "Pratik Jadhav", age: 26, gen: "M", mobile: "7738622328"},
-            {id: 31, name: "Vandamsetty Lokesh", age: 31, gen: "M", mobile: "9030747248"},
-            {id: 32, name: "Akhil Veeramalla", age: 33, gen: "M", mobile: "8970510668"},
-            {id: 33, name: "Pavan Kumar", age: 31, gen: "M", mobile: "8500582794"},
-            {id: 34, name: "Silari Sathish kumar", age: 30, gen: "M", mobile: "9948566177"},
-            {id: 35, name: "Sirpuram Santhosh", age: 35, gen: "M", mobile: "9000253137"},
-            {id: 36, name: "B. Prema Tealingam", age: 24, gen: "M", mobile: "7702672511"},
-            {id: 37, name: "D. Makhalingam", age: 36, gen: "M", mobile: "9676386146"},
-            {id: 38, name: "T. Murali mohan Reddy", age: 44, gen: "M", mobile: "9951844384"},
-            {id: 39, name: "Soma SHANKAR BANATH", age: 40, gen: "M", mobile: "9951771161"}
-        ];
+        // Start with empty list
+        let contacts = [];
+        let selectedIds = new Set();
 
         const tableBody = document.getElementById('tableBody');
         const countEl = document.getElementById('count');
         const templateEl = document.getElementById('messageTemplate');
         const searchInput = document.getElementById('searchInput');
+        const bulkSendBtn = document.getElementById('bulkSendBtn');
 
-        // Main rendering function - uses the passed data array
+        // Handles CSV Upload and Parsing
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                processCSV(text);
+            };
+            reader.readAsText(file);
+        }
+
+        function processCSV(text) {
+            const lines = text.split(/\r?\n/);
+            const newContacts = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                
+                const parts = line.split(',');
+                if (parts.length >= 2) {
+                    newContacts.push({
+                        id: Date.now() + i,
+                        name: parts[0].trim().replace(/^"|"$/g, ''),
+                        mobile: parts[1].trim().replace(/^"|"$/g, '').replace(/\D/g, ''),
+                        age: "--", 
+                        gen: "--"
+                    });
+                }
+            }
+
+            if (newContacts.length > 0) {
+                contacts = newContacts;
+                selectedIds.clear();
+                updateBulkButton();
+                saveContacts();
+                renderTable(contacts);
+                showToast(`${newContacts.length} contacts imported!`);
+            } else {
+                showToast("No valid contacts found in CSV.");
+            }
+            
+            document.getElementById('csvInput').value = '';
+        }
+
+        function toggleSelectAll(checkbox) {
+            if (checkbox.checked) {
+                contacts.forEach(c => selectedIds.add(c.id));
+            } else {
+                selectedIds.clear();
+            }
+            renderTable(contacts);
+            updateBulkButton();
+        }
+
+        function toggleContactSelection(id) {
+            if (selectedIds.has(id)) {
+                selectedIds.delete(id);
+            } else {
+                selectedIds.add(id);
+            }
+            
+            const selectAllCheckbox = document.getElementById('selectAll');
+            if (selectedIds.size === contacts.length && contacts.length > 0) {
+                selectAllCheckbox.checked = true;
+            } else {
+                selectAllCheckbox.checked = false;
+            }
+            updateBulkButton();
+        }
+
+        function updateBulkButton() {
+            if (selectedIds.size > 0) {
+                bulkSendBtn.classList.remove('hidden');
+                bulkSendBtn.innerText = `Send Selected (${selectedIds.size})`;
+            } else {
+                bulkSendBtn.classList.add('hidden');
+            }
+        }
+
         function renderTable(dataToDisplay) {
             tableBody.innerHTML = '';
             countEl.innerText = dataToDisplay.length;
 
+            if (dataToDisplay.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="4" class="px-6 py-12 text-center text-slate-400 italic text-sm">No contacts loaded. Upload a CSV to start.</td></tr>`;
+                return;
+            }
+
             dataToDisplay.forEach((person) => {
+                const isSelected = selectedIds.has(person.id);
                 const row = document.createElement('tr');
-                row.className = "hover:bg-blue-50/50 transition-colors group";
+                row.className = `hover:bg-blue-50/50 transition-colors group ${isSelected ? 'bg-blue-50/30' : ''}`;
                 row.innerHTML = `
                     <td class="px-6 py-4">
+                        <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleContactSelection(${person.id})" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                    </td>
+                    <td class="px-6 py-4">
                         <div class="text-sm font-semibold text-slate-900">${person.name}</div>
-                        <div class="text-xs text-slate-500 font-medium">${person.age} Years • ${person.gen === 'M' ? 'Male' : 'Female'}</div>
+                        <div class="text-xs text-slate-500 font-medium">Contact</div>
                     </td>
                     <td class="px-6 py-4 text-sm text-slate-600 font-mono tracking-tight">
                         +91 ${person.mobile}
@@ -204,10 +278,8 @@ Thank you for your cooperation.</textarea>
             renderTable(filtered);
         }
 
-        // Unified handler to ensure the correct name is used every time
         function handleAction(action, person) {
             const template = templateEl.value;
-            // This replaces {Name} with the actual person name from the row data
             const personalizedMsg = template.replace(/{Name}/g, person.name);
 
             if (action === "copy") {
@@ -222,6 +294,24 @@ Thank you for your cooperation.</textarea>
                 const encodedMsg = encodeURIComponent(personalizedMsg);
                 const url = `https://wa.me/91${person.mobile}?text=${encodedMsg}`;
                 window.open(url, '_blank');
+            }
+        }
+
+        function sendSelected() {
+            const selectedContacts = contacts.filter(c => selectedIds.has(c.id));
+            if (selectedContacts.length === 0) return;
+
+            if (confirm(`This will open ${selectedContacts.length} WhatsApp tabs. Your browser might block these popups initially. Do you want to continue?`)) {
+                selectedContacts.forEach((person, index) => {
+                    // Slight timeout to prevent some browser blocks
+                    setTimeout(() => {
+                        const template = templateEl.value;
+                        const personalizedMsg = template.replace(/{Name}/g, person.name);
+                        const encodedMsg = encodeURIComponent(personalizedMsg);
+                        const url = `https://wa.me/91${person.mobile}?text=${encodedMsg}`;
+                        window.open(url, '_blank');
+                    }, index * 500); // 500ms interval between tabs
+                });
             }
         }
 
@@ -242,11 +332,32 @@ Thank you for your cooperation.</textarea>
             showToast("Message template saved!");
         }
 
-        // Initialize on load
+        function saveContacts() {
+            localStorage.setItem('resampling_contacts_v2', JSON.stringify(contacts));
+        }
+
+        function clearAllData() {
+            if (confirm("This will remove all uploaded contacts and reset the template. Are you sure?")) {
+                contacts = [];
+                selectedIds.clear();
+                localStorage.removeItem('resampling_contacts_v2');
+                updateBulkButton();
+                renderTable(contacts);
+                showToast("All data cleared.");
+            }
+        }
+
         window.onload = () => {
-            const saved = localStorage.getItem('resampling_template_v2');
-            if (saved) templateEl.value = saved;
+            const savedTemplate = localStorage.getItem('resampling_template_v2');
+            if (savedTemplate) templateEl.value = savedTemplate;
+            
+            const savedContacts = localStorage.getItem('resampling_contacts_v2');
+            if (savedContacts) {
+                contacts = JSON.parse(savedContacts);
+            }
+            
             renderTable(contacts);
+            updateBulkButton();
         };
     </script>
 </body>
